@@ -1,0 +1,32 @@
+# Sensitive environment files
+.env
+.env.local
+.env.*.local
+*.env
+*.pem
+*.key
+*.cert
+
+# Python virtual environments & caches
+.venv/
+venv/
+ENV/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Testing caches
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log
+logs/
+
+# Backups and temporary files
+*.bck
+*.bak
+*~
+.DS_Store
