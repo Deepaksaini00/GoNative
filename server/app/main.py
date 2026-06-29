@@ -7,6 +7,7 @@ from uvicorn import run
 from app.database.connection import database
 from app.database.migration import apply_migrations
 from app.database.migration_to_apply import MIGRATIONS
+from app.routers import auth
 
 
 @asynccontextmanager
@@ -34,13 +35,13 @@ app.add_middleware(
 )
 
 
-@app.get("/")
-def read_root():
-    return "Gonative"
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
 
 
-# if __name__ == "__main__":
-#     main()
+app.include_router(auth.router, prefix="/api")
+
 
 if __name__ == "__main__":
     run(app, host="127.0.0.1", port=8006)

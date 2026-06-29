@@ -1,5 +1,3 @@
-from posix import access
-
 from pydantic import BaseModel, EmailStr
 
 
