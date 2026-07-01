@@ -72,7 +72,7 @@ async def m001_initial_tables(db: Database) -> None:
             lesson_id       INT REFERENCES lessons(id) ON DELETE CASCADE,
             status          TEXT NOT NULL DEFAULT 'locked',
             mastery_score   NUMERIC(5,2) NOT NULL DEFAULT 0.0,
-            started_at      TIMESTAMPTZ,
+            started_at      TIMESTAMuser_lesson_progress (PTZ,
             completed_at    TIMESTAMPTZ,
             PRIMARY KEY (user_id, lesson_id)
         )

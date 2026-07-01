@@ -41,6 +41,16 @@ async def get_concepts_by_code(code: str):
     )
 
 
+async def get_concept_progress(user_id: UUID, concept_id: int):
+
+    return await database.fetch_one(
+        """
+        SELECT * FROM user_concept_progress WHERE user_id = :user_id AND concept_id = :concept_id
+        """,
+        {"user_id": user_id, "concept_id": concept_id},
+    )
+
+
 # lessons --------
 
 
@@ -48,13 +58,13 @@ async def get_all_lessons():
     return await database.fetch_all("SELECT * FROM lessons ORDER BY level, position")
 
 
-async def get_lesson_by_id(lesson_id: UUID):
+async def get_lesson_by_id(lesson_id: int):
     return await database.fetch_one(
         "SELECT * FROM lessons WHERE id = :id", {"id": lesson_id}
     )
 
 
-async def get_lesson_concepts(lesson_id: UUID):
+async def get_lesson_concepts(lesson_id: int):
     return await database.fetch_all(
         """
         SELECT c.* FROM concepts c JOIN lesson_concepts lc ON lc.concept_id = c.id WHERE lc.lesson_id = :lesson_id ORDER BY lc.position
@@ -66,10 +76,28 @@ async def get_lesson_concepts(lesson_id: UUID):
 # lesson progress -------
 
 
-async def get_lesson_progress(user_id: UUID, lesson_id: UUID):
+async def get_lesson_progress(user_id: UUID, lesson_id: int):
     return await database.fetch_one(
         """
         SELECT * FROM user_lesson_progress WHERE user_id = :user_id AND lesson_id = :lesson_id
         """,
         {"user_id": user_id, "lesson_id": lesson_id},
+    )
+
+
+async def upsert_lesson_progress(
+    user_id: UUID, lesson_id: int, status: str, mastery_score: float
+):
+    await database.execute(
+        """
+        INSERT INTO user_lesson_progress (user_id, lesson_id, status, mastery_score, started_at, completed_at) VALUES (:user_id, :lesson_id, :status, :mastery_score, :now())
+        ON CONFLICT (user_id, lesson_id) DO UPDATE SET
+        status = :status, mastery_score = :score,  CASE WHEN :status = 'mastered' THEN now() ELSE NULL END
+        """,
+        {
+            "user_id": str(user_id),
+            "lesson_id": lesson_id,
+            "status": status,
+            "score": mastery_score,
+        },
     )
