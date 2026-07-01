@@ -21,3 +21,55 @@ async def create_user(name: str, email: str, hashed_password: str):
         "INSERT INTO users (name, email, hashed_password) VALUES (:name, :email, :hashed_password)",
         {"name": name, "email": email, "hashed_password": hashed_password},
     )
+
+
+# concepts --------
+#
+async def get_all_concepts():
+    return await database.fetch_all("SELECT * FROM concepts ORDER BY difficulty")
+
+
+async def get_concept_by_id(concept_id: UUID):
+    return await database.fetch_one(
+        "SELECT * FROM concepts WHERE id = :id", {"id": concept_id}
+    )
+
+
+async def get_concepts_by_code(code: str):
+    return await database.fetch_all(
+        "SELECT * FROM concepts WHERE code = :code", {"code": code}
+    )
+
+
+# lessons --------
+
+
+async def get_all_lessons():
+    return await database.fetch_all("SELECT * FROM lessons ORDER BY level, position")
+
+
+async def get_lesson_by_id(lesson_id: UUID):
+    return await database.fetch_one(
+        "SELECT * FROM lessons WHERE id = :id", {"id": lesson_id}
+    )
+
+
+async def get_lesson_concepts(lesson_id: UUID):
+    return await database.fetch_all(
+        """
+        SELECT c.* FROM concepts c JOIN lesson_concepts lc ON lc.concept_id = c.id WHERE lc.lesson_id = :lesson_id ORDER BY lc.position
+        """,
+        {"lesson_id": lesson_id},
+    )
+
+
+# lesson progress -------
+
+
+async def get_lesson_progress(user_id: UUID, lesson_id: UUID):
+    return await database.fetch_one(
+        """
+        SELECT * FROM user_lesson_progress WHERE user_id = :user_id AND lesson_id = :lesson_id
+        """,
+        {"user_id": user_id, "lesson_id": lesson_id},
+    )

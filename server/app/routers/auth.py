@@ -8,7 +8,6 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/register", response_model=SessionResponse)
 async def register(request: RegisterRequest):
-    print("Herereererererererrererererr***********")
     res = await auth_service.register(
         name=request.name,
         email=request.email,
