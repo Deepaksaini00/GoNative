@@ -1,5 +1,4 @@
 import json
-
 import httpx
 
 from app.core.config import settings
@@ -27,4 +26,3 @@ async def gemini_request(system_prompt: str, user_prompt: str) -> dict:
         raw_text = response.json()["candidates"][0]["content"]["parts"][0]["text"]
         return json.load(raw_text)
 
-    pass

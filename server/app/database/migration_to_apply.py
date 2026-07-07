@@ -138,5 +138,4 @@ async def m001_initial_tables(db: Database) -> None:
 
 MIGRATIONS: list[MigrationFunctions] = [
     m001_initial_tables,
-    m001_initial_tables,
 ]
