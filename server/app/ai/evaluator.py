@@ -21,13 +21,15 @@ grammar_breakdown must be null when is_correct is true.
 
 
 async def evaluate_answer(
-    question_text: str, correct_answer: str, user_answer: str, concept_slug: str
+    question_text: str,
+    correct_answer: str,
+    user_answer: str,
 ) -> dict:
     user_prompt = (
         f"Question: {question_text}\n"
         f"Correct Answer: {correct_answer}\n"
         f"User Answer: {user_answer}\n"
-        f"Concept: {concept_slug}\n"
+        # f"Concept: {concept_slug}\n"
         f"{EVAL_SCHEMA}"
     )
     return await gemini_request(EVALUATOR_SYSTEM, user_prompt)
