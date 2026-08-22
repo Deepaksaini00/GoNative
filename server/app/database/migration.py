@@ -1,51 +1,50 @@
-from datetime import datetime
-from typing import Callable, Coroutine
+from datetime import datetime, timezone
+from typing import Awaitable, Callable
 
-from databases import Database
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncConnection
 
 MIGRATION_TABLE_NAME = "migration_version"
-MigrationFunctions = Callable[[Database], Coroutine]
+
+MigrationFunction = Callable[[AsyncConnection], Awaitable[None]]
 
 
-async def apply_migrations(db: Database, migrations: list[MigrationFunctions]) -> None:
-    # print("migrations", [m.__name__ for m in migrations], len(migrations))
-
-    async with db.transaction():
-        migration_table = await db.fetch_one(
+async def apply_migrations(
+    conn: AsyncConnection, migrations: list[MigrationFunction]
+) -> None:
+    await conn.execute(
+        text(
+            f"""
+            CREATE TABLE IF NOT EXISTS {MIGRATION_TABLE_NAME} (
+                version INTEGER PRIMARY KEY,
+                applied_on TEXT NOT NULL
+            )
             """
-            SELECT table_name FROM information_schema.tables WHERE table_name = :table_name
-            """,
-            {"table_name": MIGRATION_TABLE_NAME},
         )
-        if migration_table is None:
-            await db.execute(
-                """
-                CREATE TABLE migration_version (
-                    version INTEGER PRIMARY KEY,
-                    applied_on TEXT NOT NULL
-                )
-                """
-            )
+    )
 
-        migrations_applied = await db.fetch_one(
-            " SELECT count(*) as count FROM migration_version"
+    result = await conn.execute(
+        text(f"SELECT count(*) AS count FROM {MIGRATION_TABLE_NAME}")
+    )
+    count: int = result.scalar_one()
+
+    if count > len(migrations):
+        raise Exception(
+            "Database has newer migrations than your code. "
+            "Please deploy a newer version."
         )
-        assert migrations_applied is not None
 
-        count: int = migrations_applied["count"]
-
-        # print(
-        #     f"-------------------- count: {count} and len(migrations): {len(migrations)}"
-        # )
-
-        if count > len(migrations):
-            raise Exception(
-                "Database has newer migrations than your code. Please deploy a newer version."
-            )
-
-        for i, migration in enumerate(migrations[count:]):
-            await migration(db)
-            await db.execute(
-                "INSERT INTO migration_version (version, applied_on) VALUES (:version, :applied_on)",
-                {"version": count + i + 1, "applied_on": datetime.now().isoformat()},
-            )
+    for i, migration in enumerate(migrations[count:]):
+        await migration(conn)
+        await conn.execute(
+            text(
+                f"""
+                INSERT INTO {MIGRATION_TABLE_NAME} (version, applied_on)
+                VALUES (:version, :applied_on)
+                """
+            ),
+            {
+                "version": count + i + 1,
+                "applied_on": datetime.now(timezone.utc).isoformat(),
+            },
+        )

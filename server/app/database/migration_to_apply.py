@@ -1,141 +1,110 @@
-from databases import Database
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncConnection
 
-from app.database.migration import MigrationFunctions
+from app.database.migration import MigrationFunction
 
 
-async def m001_initial_tables(db: Database) -> None:
-    await db.execute(
-        """
-        CREATE TABLE IF NOT EXISTS users (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            name TEXT NOT NULL,
-            email TEXT NOT NULL UNIQUE,
-            hashed_password TEXT NOT NULL,
-            native_lang TEXT DEFAULT 'hi',
-            target_lang TEXT DEFAULT 'en',
-            created_at TIMESTAMP NOT NULL DEFAULT now()
-        );
-        """
+async def m001_initial_tables(conn: AsyncConnection) -> None:
+    await conn.execute(
+        text(
+            """
+            CREATE TABLE IF NOT EXISTS users (
+                id              UUID PRIMARY KEY,
+                name            TEXT NOT NULL,
+                email           TEXT NOT NULL UNIQUE,
+                hashed_password TEXT NOT NULL,
+                native_lang     TEXT NOT NULL DEFAULT 'hi',
+                target_lang     TEXT NOT NULL DEFAULT 'en',
+                created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+                last_login      TIMESTAMPTZ,
+                current_streak  INTEGER DEFAULT 0,
+                total_xp        INTEGER DEFAULT 0
+            )
+            """
+        )
     )
 
-    await db.execute("""
-        CREATE TABLE IF NOT EXISTS concepts (
-            id              SERIAL PRIMARY KEY,
-            code            TEXT UNIQUE NOT NULL,
-            title_en        TEXT NOT NULL,
-            title_hi        TEXT NOT NULL,
-            description_en  TEXT,
-            description_hi  TEXT,
-            difficulty      INT NOT NULL DEFAULT 1,
-            parent_id       INT REFERENCES concepts(id) ON DELETE SET NULL
+    await conn.execute(
+        text(
+            """
+            CREATE TABLE IF NOT EXISTS lessons (
+                id            SERIAL PRIMARY KEY,
+                title         TEXT NOT NULL,
+                title_hindi   TEXT,
+                description   TEXT,
+                level         INTEGER DEFAULT 1,
+                order_index   INTEGER DEFAULT 0,
+                category      TEXT DEFAULT 'general',
+                content       JSONB,
+                is_generated  BOOLEAN DEFAULT false,
+                created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+            )
+            """
         )
-    """)
+    )
 
-    await db.execute("""
-        CREATE TABLE IF NOT EXISTS lessons (
-            id              SERIAL PRIMARY KEY,
-            code            TEXT UNIQUE NOT NULL,
-            title_en        TEXT NOT NULL,
-            title_hi        TEXT NOT NULL,
-            level           INT NOT NULL,
-            position        INT NOT NULL,
-            created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+    await conn.execute(
+        text(
+            """
+            CREATE TABLE IF NOT EXISTS quiz_questions (
+                id                SERIAL PRIMARY KEY,
+                lesson_id         INTEGER NOT NULL REFERENCES lessons(id),
+                question_text     TEXT NOT NULL,
+                question_hindi    TEXT,
+                question_type     TEXT DEFAULT 'mcq',
+                options           JSONB,
+                correct_answer    TEXT NOT NULL,
+                explanation       TEXT,
+                explanation_hindi TEXT
+            )
+            """
         )
-    """)
+    )
 
-    await db.execute("""
-        CREATE TABLE IF NOT EXISTS lesson_concepts (
-            lesson_id       INT REFERENCES lessons(id) ON DELETE CASCADE,
-            concept_id      INT REFERENCES concepts(id) ON DELETE CASCADE,
-            position        INT NOT NULL,
-            PRIMARY KEY (lesson_id, concept_id)
+    await conn.execute(
+        text(
+            """
+            CREATE TABLE IF NOT EXISTS user_progress (
+                id             SERIAL PRIMARY KEY,
+                user_id        UUID NOT NULL REFERENCES users(id),
+                lesson_id      INTEGER NOT NULL REFERENCES lessons(id),
+                status         TEXT DEFAULT 'not_started',
+                score          FLOAT DEFAULT 0.0,
+                attempts       INTEGER DEFAULT 0,
+                last_attempted TIMESTAMPTZ,
+                completed_at   TIMESTAMPTZ,
+                xp_earned      INTEGER DEFAULT 0
+            )
+            """
         )
-    """)
+    )
 
-    await db.execute("""
-        CREATE TABLE IF NOT EXISTS user_concept_progress (
-            user_id         UUID REFERENCES users(id) ON DELETE CASCADE,
-            concept_id      INT REFERENCES concepts(id) ON DELETE CASCADE,
-            attempts_total  INT NOT NULL DEFAULT 0,
-            correct_total   INT NOT NULL DEFAULT 0,
-            streak_correct  INT NOT NULL DEFAULT 0,
-            mastery_score   NUMERIC(5,2) NOT NULL DEFAULT 0.0,
-            last_seen_at    TIMESTAMPTZ,
-            mastered_at     TIMESTAMPTZ,
-            PRIMARY KEY (user_id, concept_id)
+    await conn.execute(
+        text(
+            """
+            CREATE TABLE IF NOT EXISTS quiz_attempts (
+                id                  SERIAL PRIMARY KEY,
+                user_id             UUID NOT NULL REFERENCES users(id),
+                lesson_id           INTEGER NOT NULL REFERENCES lessons(id),
+                attempt_type        TEXT DEFAULT 'lesson',
+                answers             JSONB,
+                score               FLOAT DEFAULT 0.0,
+                total_questions     INTEGER DEFAULT 0,
+                correct_answers     INTEGER DEFAULT 0,
+                time_taken_seconds  INTEGER DEFAULT 0,
+                ai_feedback         TEXT,
+                created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+            )
+            """
         )
-    """)
-
-    await db.execute("""
-        CREATE TABLE IF NOT EXISTS user_lesson_progress (
-            user_id         UUID REFERENCES users(id) ON DELETE CASCADE,
-            lesson_id       INT REFERENCES lessons(id) ON DELETE CASCADE,
-            status          TEXT NOT NULL DEFAULT 'locked',
-            mastery_score   NUMERIC(5,2) NOT NULL DEFAULT 0.0,
-            started_at      TIMESTAMuser_lesson_progress (PTZ,
-            completed_at    TIMESTAMPTZ,
-            PRIMARY KEY (user_id, lesson_id)
-        )
-    """)
-
-    await db.execute("""
-        CREATE TABLE IF NOT EXISTS lesson_sessions (
-            id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            user_id         UUID REFERENCES users(id) ON DELETE CASCADE,
-            lesson_id       INT REFERENCES lessons(id) ON DELETE SET NULL,
-            generated_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
-            gemini_model    TEXT NOT NULL,
-            prompt_version  TEXT NOT NULL,
-            metadata        JSONB
-        )
-    """)
-
-    await db.execute("""
-        CREATE TABLE IF NOT EXISTS questions (
-            id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            session_id      UUID REFERENCES lesson_sessions(id) ON DELETE CASCADE,
-            concept_id      INT REFERENCES concepts(id) ON DELETE SET NULL,
-            item_index      INT NOT NULL,
-            prompt_hi       TEXT NOT NULL,
-            correct_answer  TEXT NOT NULL,
-            question_type   TEXT NOT NULL,
-            metadata        JSONB
-        )
-    """)
-
-    await db.execute("""
-        CREATE TABLE IF NOT EXISTS user_answers (
-            id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            user_id         UUID REFERENCES users(id) ON DELETE CASCADE,
-            question_id     UUID REFERENCES questions(id) ON DELETE CASCADE,
-            user_answer     TEXT NOT NULL,
-            is_correct      BOOLEAN NOT NULL,
-            score           NUMERIC(5,2) NOT NULL,
-            error_type      TEXT,
-            explanation_hi  TEXT,
-            evaluated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
-        )
-    """)
-
-    await db.execute("""
-        CREATE TABLE IF NOT EXISTS daily_reviews (
-            id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            user_id         UUID REFERENCES users(id) ON DELETE CASCADE,
-            review_date     DATE NOT NULL,
-            completed       BOOLEAN NOT NULL DEFAULT FALSE,
-            created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-            UNIQUE (user_id, review_date)
-        )
-    """)
+    )
 
 
 # Future migrations added here as new functions:
-# async def m002_update_user(db: Database) -> None:
-#     await db.execute("""
-#         ALTER TABLE users ADD COLUMN username TEXT
-#     """)
+# async def m002_add_user_field(conn: AsyncConnection) -> None:
+#     await conn.execute(text("ALTER TABLE users ADD COLUMN username TEXT"))
 
 
-MIGRATIONS: list[MigrationFunctions] = [
+MIGRATIONS: list[MigrationFunction] = [
     m001_initial_tables,
 ]

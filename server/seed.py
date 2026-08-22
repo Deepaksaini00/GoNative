@@ -2,6 +2,7 @@ import asyncio
 
 from app.database.connection import database
 
+
 async def seed():
     await database.connect()
 
@@ -74,5 +75,6 @@ async def seed():
 
     await database.disconnect()
     print("✓ Seeding complete")
+
 
 asyncio.run(seed())

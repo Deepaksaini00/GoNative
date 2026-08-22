@@ -4,48 +4,42 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from uvicorn import run
 
-from app.database.connection import database
-from app.database.migration import apply_migrations
-from app.database.migration_to_apply import MIGRATIONS
-from app.routers import answer, auth, lesson, progress, review
+from app.api import auth, chat, lessons, progress, quiz
+from app.core.config import settings
+from app.core.database import init_db
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup logic
-    await database.connect()
-    await apply_migrations(database, MIGRATIONS)
-    print("Database connected and migrations applied")
+    await init_db()
     yield
 
-    # shutdown
-    await database.disconnect()
-    print("Database disconnected")
 
-
-# app = FastAPI(title="GoNative API", version="1.0.0", lifespan=lifespan)
-
-app = FastAPI(lifespan=lifespan, debug=True)
+app = FastAPI(
+    title="LangLearn API",
+    description="AI-powered language learning platform (Hindi → English)",
+    version="1.0.0",
+    lifespan=lifespan,
+)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.cors_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+app.include_router(auth.router)
+app.include_router(lessons.router)
+app.include_router(quiz.router)
+app.include_router(chat.router)
+app.include_router(progress.router)
+
 
 @app.get("/health")
 async def health():
-    return {"status": "ok"}
-
-
-app.include_router(auth.router, prefix="/api")
-app.include_router(answer.router, prefix="/api")
-app.include_router(lesson.router, prefix="/api")
-app.include_router(progress.router, prefix="/api")
-app.include_router(review.router, prefix="/api")
+    return {"status": "ok", "version": "1.0.0"}
 
 
 if __name__ == "__main__":

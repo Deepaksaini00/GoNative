@@ -1,5 +1,7 @@
 import asyncio
+
 from app.database.connection import database
+
 
 async def test():
     await database.connect()
@@ -9,4 +11,3 @@ async def test():
 
 
 asyncio.run(test())
-

@@ -1,7 +1,7 @@
 [project]
 name = "gonative"
 version = "0.1.0"
-description = "Add your description here"
+description = "LangLearn backend - AI-powered language learning API (Hindi -> English)"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -21,7 +21,12 @@ dependencies = [
     # Auth
     "python-jose[cryptography]>=3.3.0",
     "passlib[bcrypt]>=1.7.4",
-    "bcrypt>=5.0.0",
+    "bcrypt==4.0.1",
+    # AI + validation
+    "google-generativeai>=0.8.3",
+    "python-dotenv>=1.0.1",
+    "python-multipart>=0.0.20",
+    "email-validator>=2.2.0",
 ]
 
 [dependency-groups]
