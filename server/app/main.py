@@ -7,7 +7,7 @@ from uvicorn import run
 from app.database.connection import database
 from app.database.migration import apply_migrations
 from app.database.migration_to_apply import MIGRATIONS
-from app.routers import auth
+from app.routers import answer, auth, lesson, progress, review
 
 
 @asynccontextmanager
@@ -24,7 +24,7 @@ async def lifespan(app: FastAPI):
 
 
 # app = FastAPI(title="GoNative API", version="1.0.0", lifespan=lifespan)
- 
+
 app = FastAPI(lifespan=lifespan, debug=True)
 
 app.add_middleware(
@@ -42,6 +42,10 @@ async def health():
 
 
 app.include_router(auth.router, prefix="/api")
+app.include_router(answer.router, prefix="/api")
+app.include_router(lesson.router, prefix="/api")
+app.include_router(progress.router, prefix="/api")
+app.include_router(review.router, prefix="/api")
 
 
 if __name__ == "__main__":
