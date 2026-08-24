@@ -77,7 +77,7 @@ async def seed_lessons(
     return {"message": "Curriculum seeded"}
 
 
-@router.get("/{lesson_id}/questions", response_model=List[QuizQuestionOut])
+@router.get("/{lesson_id}/questions", response_model=list[QuizQuestionOut])
 async def get_lesson_questions(
     lesson_id: int,
     db: AsyncSession = Depends(get_db),
