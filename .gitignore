@@ -1,10 +1,28 @@
-# Python-generated files
-__pycache__/
-*.py[oc]
-build/
-dist/
-wheels/
-*.egg-info
+# ==========================================
+# Backend (Server - Python)
+# ==========================================
+server/__pycache__/
+server/*.py[oc]
+server/build/
+server/dist/
+server/wheels/
+server/*.egg-info
+server/.venv
 
-# Virtual environments
-.venv
+# ==========================================
+# Frontend (Client - Node / Vite / React)
+# ==========================================
+client/node_modules/
+client/dist/
+client/dist-ssr/
+client/*.local
+client/.env
+
+# Client Logs
+client/logs/
+client/*.log
+client/npm-debug.log*
+client/yarn-debug.log*
+client/yarn-error.log*
+client/pnpm-debug.log*
+client/lerna-debug.log*
