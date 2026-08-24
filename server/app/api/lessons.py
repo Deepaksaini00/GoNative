@@ -1,5 +1,3 @@
-from typing import List
-
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -21,7 +19,7 @@ from app.services.lesson_service import (
 router = APIRouter(prefix="/api/lessons", tags=["lessons"])
 
 
-@router.get("", response_model=List[LessonWithProgress])
+@router.get("", response_model=list[LessonWithProgress])
 async def list_lessons(
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_user),

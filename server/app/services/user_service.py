@@ -34,9 +34,22 @@ async def create_user(db: AsyncSession, data: UserRegister) -> User:
 
 async def authenticate_user(db: AsyncSession, email: str, password: str) -> User | None:
     user = await get_user_by_email(db, email)
-    if not user or not verify_password(password, user.hashed_password):
+    print("***********************")
+    if not user:
+        print(f"[DEBUG AUTH] No user found with email: '{email}'")
+        return None        
+
+    is_valid = verify_password(password, user.hashed_password)
+
+    print(f"[DEBUG AUTH] User found: {user.email} | Password match: {is_valid}")
+
+    if not is_valid:
         return None
-    return user
+    
+    return user    
+    # if not user or not verify_password(password, user.hashed_password):
+    #     return None
+    # return user
 
 
 async def update_user_xp(db: AsyncSession, user: User, xp: int):

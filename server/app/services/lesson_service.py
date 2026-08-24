@@ -139,7 +139,7 @@ async def seed_curriculum(
     for item in LESSON_CURRICULUM[:3]:
         await get_or_create_lesson(
             db,
-            level=item["level"],
+            level=int(item["level"]),
             category=item["category"],
             order_index=item["order"],
             native_language=native_language,

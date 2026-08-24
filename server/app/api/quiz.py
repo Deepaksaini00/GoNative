@@ -55,7 +55,9 @@ async def submit_quiz(
     questions = {q.id: q for q in result.scalars().all()}
 
     if not questions:
-        raise HTTPException(status_code=404, detail="No questions found for this lesson")
+        raise HTTPException(
+            status_code=404, detail="No questions found for this lesson"
+        )
 
     detailed_answers: List[AnswerFeedback] = []
     correct_count = 0
@@ -194,7 +196,9 @@ async def get_daily_review(
             target_language=current_user.target_lang,
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to generate review: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to generate review: {str(e)}"
+        )
 
     # Convert to response format (without correct_answer)
     questions = []
