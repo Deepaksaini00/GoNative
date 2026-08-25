@@ -49,7 +49,7 @@ async def generate_lesson(
     current_user=Depends(get_current_user),
 ):
     """Generate a new lesson on demand."""
-    order = sum(1 for c in CURRICULUM if c["level"] == req.level and c["order"] <= 99)
+    order = sum(1 for c in CURRICULUM if c["level"] == req.level and int(c["order"]) <= 99)
     lesson = await get_or_create_lesson(
         db,
         level=req.level,

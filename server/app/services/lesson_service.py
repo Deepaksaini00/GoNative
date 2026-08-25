@@ -12,9 +12,9 @@ from app.services.gemini_service import (
 )
 
 
-async def get_all_lessons(db: AsyncSession) -> List[Lesson]:
+async def get_all_lessons(db: AsyncSession) -> list[Lesson]:
     result = await db.execute(select(Lesson).order_by(Lesson.level, Lesson.order_index))
-    return result.scalars().all()
+    return list(result.scalars().all())
 
 
 async def get_lesson_by_id(db: AsyncSession, lesson_id: int) -> Optional[Lesson]:
@@ -130,6 +130,8 @@ async def generate_and_save_quiz(
     await db.commit()
 
 
+
+
 async def seed_curriculum(
     db: AsyncSession,
     native_language: str = "hindi",
@@ -140,8 +142,8 @@ async def seed_curriculum(
         await get_or_create_lesson(
             db,
             level=int(item["level"]),
-            category=item["category"],
-            order_index=item["order"],
+            category=str(item["category"]),
+            order_index=int(item["order"]),
             native_language=native_language,
             target_language=target_language,
         )
@@ -153,7 +155,7 @@ async def get_quiz_questions(
     result = await db.execute(
         select(QuizQuestion).where(QuizQuestion.lesson_id == lesson_id)
     )
-    return result.scalars().all()
+    return list(result.scalars().all())
 
 
 async def get_user_progress(
@@ -215,4 +217,4 @@ async def get_last_completed_lessons(
         .order_by(UserProgress.completed_at.desc())
         .limit(limit)
     )
-    return result.scalars().all()
+    return list(result.scalars().all())

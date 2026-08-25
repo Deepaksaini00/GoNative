@@ -97,7 +97,7 @@ async def submit_quiz(
 
         detailed_answers.append(
             AnswerFeedback(
-                question_id=qid,
+                question_id=q.id,
                 is_correct=is_correct,
                 correct_answer=q.correct_answer,
                 explanation=q.explanation or "",

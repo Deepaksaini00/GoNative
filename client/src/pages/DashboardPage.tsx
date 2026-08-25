@@ -64,25 +64,19 @@ export default function DashboardPage() {
     } finally {
       setSeeding(false);
     }
-
-    const {
-      level: userLevel,
-      progress: xpProgress,
-      nextLevelXp,
-    } = xpToLevel(user?.total_xp || 0);
-    const leveledLessons = lessons.filter((l) => l.level === activeLevel);
-
-    const levels = [...new Set(lessons.map((l) => l.level))].sort(
-      (a, b) => a - b,
-    );
-
-    // const levels = [...new Set(lessons.map((l) => l.level))].sort();
-
-    const isLessonUnlocked = (lesson: Lesson, idx: number) => {
-      if (idx === 0) return true;
-      const prev = leveledLessons[idx - 1];
-      return prev?.status === "completed" || prev?.status === "mastered";
-    };
+  };
+  const {
+    level: userLevel,
+    progress: xpProgress,
+    nextLevelXp,
+  } = xpToLevel(user?.total_xp || 0);
+  const leveledLessons = lessons.filter((l) => l.level === activeLevel);
+  const levels = [...new Set(lessons.map((l) => l.level))].sort();
+  console.log("*****", levels);
+  const isLessonUnlocked = (lesson: Lesson, idx: number) => {
+    if (idx === 0) return true;
+    const prev = leveledLessons[idx - 1];
+    return prev?.status === "completed" || prev?.status === "mastered";
 
     if (loading) {
       return (
@@ -184,7 +178,7 @@ export default function DashboardPage() {
         </div>
         {lessons.length === 0 ? (
           <div>
-            <p className="text-slate-300 font-semibold mb-2">No lessons yet</p>
+            <p className="text-slate-800 font-semibold mb-2">No lessons yet</p>
           </div>
         ) : (
           <>
@@ -195,13 +189,73 @@ export default function DashboardPage() {
                     key={lvl}
                     onClick={() => setActiveLevel(lvl)}
                     className={`px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200
-                      ${activeLevel === lvl ? "bg-brand-500 text-white" : "bg-white/5 text-slate-400 hover:text-white"}`}
+                      ${activeLevel === lvl ? "bg-brand-500 text-te" : "bg-white/5 text-slate-400 hover:text-white"}`}
                   >
                     {getLevelLabel(lvl)}
                   </button>
                 ))}
               </div>
             )}
+
+            <div className="space-x-4 bg-amber-50">
+              {leveledLessons.map((lesson, idx) => {
+                const unlocked = isLessonUnlocked(lesson, idx);
+                return (
+                  <motion.div
+                    key={lesson.id}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                  >
+                    <button
+                      key={idx}
+                      disabled={!unlocked}
+                      className={`w-full text-left card p-4 transition-all duration-200 group
+                        ${unlocked ? "hover:bg-(--bg-card-hover)  hover:border-white/12 cursor-pointer" : "opacity-50 cursor-not-allowed"}`}
+                      onClick={() =>
+                        unlocked && navigate(`/lessons/${lesson.id}`)
+                      }
+                    ></button>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-white font-semibold text-sm group-hover:text-brand-300 transition-colors">
+                          {lesson.title}
+                        </span>
+                        <span
+                          className={`badge text-xs ${getLevelColor(lesson.level)}`}
+                        >
+                          {getLevelLabel(lesson.level)}
+                        </span>
+                      </div>
+                      {lesson.title_hindi && (
+                        <div className="text-slate-500 text-xs font-hindi mt-0.5">
+                          {lesson.title_hindi}
+                        </div>
+                      )}
+                      <div className="flex items-center gap-3 mt-1.5">
+                        <span
+                          className={`badge text-xs ${getStatusColor(lesson.status)}`}
+                        >
+                          {getStatusLabel(lesson.status)}
+                        </span>
+                        {lesson.score > 0 && (
+                          <span className="text-xs text-slate-500">
+                            Best: {lesson.score.toFixed(0)}%
+                          </span>
+                        )}
+                        {lesson.xp_earned > 0 && (
+                          <span className="text-xs text-brand-400 flex items-center gap-1">
+                            <Star className="w-3 h-3" />
+                            {lesson.xp_earned} XP
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
           </>
         )}
       </div>

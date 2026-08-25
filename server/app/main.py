@@ -16,7 +16,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="LangLearn API",
+    title="GoNative API",
     description="AI-powered language learning platform (Hindi → English)",
     version="1.0.0",
     lifespan=lifespan,
