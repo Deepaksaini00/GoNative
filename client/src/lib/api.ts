@@ -2,6 +2,8 @@ import createClient, { type Middleware } from 'openapi-fetch'
 import type { paths } from '@/generated/api'
 import { env } from '../lib/config'
 
+export const UNAUTHORIZED_EVENT = 'auth:unauthorized'
+
 const authMiddleware: Middleware = {
   async onRequest({ request }:{request: Request}) {
     const token = localStorage.getItem('token')
@@ -13,6 +15,7 @@ const authMiddleware: Middleware = {
   async onResponse({ response }:{response: Response}) {
     if (response.status === 401) {
       localStorage.removeItem('token')
+      window.dispatchEvent(new CustomEvent(UNAUTHORIZED_EVENT))
       if (!window.location.pathname.startsWith('/login')) {
         window.location.href = '/login'
       }

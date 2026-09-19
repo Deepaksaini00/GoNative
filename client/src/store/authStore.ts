@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { User } from '@/types'
-import { api } from '../lib/api'
+import { api, UNAUTHORIZED_EVENT } from '../lib/api'
 
 interface AuthState {
   user: User | null
@@ -77,3 +77,7 @@ export const useAuthStore = create<AuthState>()(
     }
   )
 )
+
+window.addEventListener(UNAUTHORIZED_EVENT, () => {
+  useAuthStore.getState().logout()
+})
