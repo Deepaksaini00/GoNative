@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = ""
     DATABASE_URL: str = ""
     TEST_DB_URL: str = ""
-    CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000"
+    CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000,https://go-native-nine.vercel.app"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
     ALGORITHM: str = "HS256"
 
